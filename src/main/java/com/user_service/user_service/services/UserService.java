@@ -11,6 +11,8 @@ import java.util.List;
 public interface UserService {
     ResponseEntity<List<UserEntity>> getAllUsers();
 
+    ResponseEntity<Long> getUserByEmail(String email) throws UserNotFoundException;
+
     UserEntity saveUser(UserEntity user);
 
     ResponseEntity<UserDTO> createUser(UserDTO userDTO) throws IllegalAttributeException;

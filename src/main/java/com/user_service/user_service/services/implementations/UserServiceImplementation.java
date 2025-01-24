@@ -27,6 +27,13 @@ public class UserServiceImplementation implements UserService {
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
+    @Override
+    public ResponseEntity<Long> getUserByEmail(String email) throws UserNotFoundException {
+        UserEntity user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with mail: " + email));
+
+        return new ResponseEntity<>(user.getId(), HttpStatus.OK);
+    }
+
 
     @Override
     public UserEntity saveUser(UserEntity user) {

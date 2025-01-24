@@ -108,4 +108,9 @@ public class UserController {
     public ResponseEntity<RoleType[]> getAllRoles() {
         return ResponseEntity.ok(RoleType.values());
     }
+
+    @GetMapping("/email/{email}")
+    public ResponseEntity<Long> getUserByEmail(@PathVariable String email) throws UserNotFoundException {
+        return userService.getUserByEmail(email);
+    }
 }

@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,10 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private Environment environment;
+
 
     @Operation(summary = "Get all users", description = "Retrieve a list of all users")
     @ApiResponses({
@@ -37,6 +42,7 @@ public class UserController {
     })
     @GetMapping
     public ResponseEntity<List<UserEntity>> getAllUsers() {
+        System.out.println(environment.getProperty("local.server.port"));
         return userService.getAllUsers();
     }
 

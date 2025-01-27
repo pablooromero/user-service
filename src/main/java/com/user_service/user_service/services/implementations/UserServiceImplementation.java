@@ -1,6 +1,7 @@
 package com.user_service.user_service.services.implementations;
 
 import com.user_service.user_service.dtos.UserDTO;
+import com.user_service.user_service.enums.RoleType;
 import com.user_service.user_service.exceptions.IllegalAttributeException;
 import com.user_service.user_service.exceptions.UserNotFoundException;
 import com.user_service.user_service.models.UserEntity;
@@ -48,7 +49,7 @@ public class UserServiceImplementation implements UserService {
         userEntity.setUsername(userDTO.getUsername());
         userEntity.setEmail(userDTO.getEmail());
         userEntity.setPassword(userDTO.getPassword());
-        userEntity.setRole(userDTO.getRole());
+        userEntity.setRole(RoleType.USER);
 
         UserEntity savedUser = saveUser(userEntity);
 

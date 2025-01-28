@@ -9,14 +9,12 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 public interface UserService {
-    ResponseEntity<List<UserEntity>> getAllUsers();
 
     ResponseEntity<Long> getUserByEmail(String email) throws UserNotFoundException;
 
     UserEntity saveUser(UserEntity user);
 
-    ResponseEntity<UserDTO> createUser(UserDTO userDTO) throws IllegalAttributeException;
-
+    //TODO Refactor para hacer solo poder editar/borrar su propio usuario
     ResponseEntity<UserDTO> updateUser(UserDTO userDTO) throws UserNotFoundException, IllegalAttributeException;
 
     ResponseEntity<String> deleteUser(Long id) throws UserNotFoundException;

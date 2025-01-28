@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.regex.Pattern;
 
 @Service
@@ -20,12 +19,6 @@ public class UserServiceImplementation implements UserService {
     @Autowired
     private UserRepository userRepository;
 
-
-    @Override
-    public ResponseEntity<List<UserEntity>> getAllUsers() {
-        List<UserEntity> users = userRepository.findAll();
-        return new ResponseEntity<>(users, HttpStatus.OK);
-    }
 
     @Override
     public ResponseEntity<Long> getUserByEmail(String email) throws UserNotFoundException {
@@ -40,21 +33,8 @@ public class UserServiceImplementation implements UserService {
         return userRepository.save(user);
     }
 
-    @Override
-    public ResponseEntity<UserDTO> createUser(UserDTO userDTO) throws IllegalAttributeException {
-        validateUser(userDTO);
 
-        UserEntity userEntity = new UserEntity();
-        userEntity.setUsername(userDTO.getUsername());
-        userEntity.setEmail(userDTO.getEmail());
-        userEntity.setPassword(userDTO.getPassword());
-        userEntity.setRole(userDTO.getRole());
-
-        UserEntity savedUser = saveUser(userEntity);
-
-        return new ResponseEntity<>(new UserDTO(savedUser), HttpStatus.CREATED);
-    }
-
+    //TODO Refactor para solo poder actualizar su perfil
     @Override
     public ResponseEntity<UserDTO> updateUser(UserDTO userDTO) throws UserNotFoundException, IllegalAttributeException {
         validateUser(userDTO);
@@ -72,6 +52,7 @@ public class UserServiceImplementation implements UserService {
         return new ResponseEntity<>(new UserDTO(savedUser), HttpStatus.OK);
     }
 
+    //TODO Refactor para solo poder borrar su usuario
     @Override
     public ResponseEntity<String> deleteUser(Long id) throws UserNotFoundException {
         userRepository.findById(id)
@@ -92,10 +73,6 @@ public class UserServiceImplementation implements UserService {
         String emailPattern = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
         if (!Pattern.matches(emailPattern, userDTO.getEmail())) {
             throw new IllegalAttributeException("Invalid email format");
-        }
-
-        if (userRepository.existsByEmail(userDTO.getEmail())) {
-            throw new IllegalAttributeException("Email is already in use");
         }
 
         if (userDTO.getUsername() == null || userDTO.getUsername().trim().isEmpty()) {

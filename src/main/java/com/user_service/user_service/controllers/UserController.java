@@ -1,10 +1,12 @@
 package com.user_service.user_service.controllers;
 
+import com.user_service.user_service.config.JwtUtils;
+import com.user_service.user_service.dtos.UpdateUserRecord;
 import com.user_service.user_service.dtos.UserDTO;
-import com.user_service.user_service.enums.RoleType;
-import com.user_service.user_service.exceptions.IllegalAttributeException;
+import com.user_service.user_service.dtos.UserRecord;
+import com.user_service.user_service.exceptions.UserException;
 import com.user_service.user_service.exceptions.UserNotFoundException;
-import com.user_service.user_service.models.UserEntity;
+import com.user_service.user_service.services.AdminService;
 import com.user_service.user_service.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -12,12 +14,10 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("api/users")
@@ -26,8 +26,20 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private AdminService adminService;
 
-    //TODO Refactor para solo poder hacer el update de su propio user
+    @Autowired
+    private JwtUtils jwtUtils;
+
+
+    @GetMapping()
+    public ResponseEntity<UserRecord> getUserById(HttpServletRequest request) throws UserException, UserNotFoundException {
+        String email = jwtUtils.getEmailFromToken(request.getHeader("Authorization"));
+        Long id = userService.getUserIdByEmail(email).getBody();
+        return adminService.getUserById(id);
+    }
+
     @Operation(summary = "Update an existing user", description = "Update an existing user's details by their ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "User updated successfully",
@@ -44,13 +56,15 @@ public class UserController {
                     )
             )
     })
-    @PutMapping
-    public ResponseEntity<UserDTO> updateUser(@RequestBody UserDTO userDTO) throws UserNotFoundException, IllegalAttributeException {
-        return userService.updateUser(userDTO);
+    @PutMapping()
+    public ResponseEntity<UserRecord> updateUser(@RequestBody UpdateUserRecord updateUserRecord, HttpServletRequest request) throws UserException, UserNotFoundException {
+        String email = jwtUtils.getEmailFromToken(request.getHeader("Authorization"));
+        Long id = userService.getUserIdByEmail(email).getBody();
+
+        return userService.updateUser(id, updateUserRecord);
     }
 
 
-    //TODO Refactor para solo poder borrarse asi mismo
     @Operation(summary = "Delete a user", description = "Delete an existing user by their ID")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "User deleted successfully"),
@@ -60,14 +74,18 @@ public class UserController {
                     )
             )
     })
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable Long id) throws UserNotFoundException {
-        return userService.deleteUser(id);
+    @DeleteMapping()
+    public ResponseEntity<Void> deleteUserById(HttpServletRequest request) throws UserNotFoundException, UserException {
+        String email = jwtUtils.getEmailFromToken(request.getHeader("Authorization"));
+        ResponseEntity<Long> id = userService.getUserIdByEmail(email);
+        userService.deleteUserById(id.getBody());
+        return ResponseEntity.noContent().build();
     }
 
 
-    @GetMapping("/email/{email}")
-    public ResponseEntity<Long> getUserByEmail(@PathVariable String email) throws UserNotFoundException {
-        return userService.getUserByEmail(email);
+    @GetMapping("/private/email/{email}")
+    public ResponseEntity<Long> getUserIdByEmail(@PathVariable String email) throws UserNotFoundException {
+        Long userId = userService.getUserIdByEmail(email).getBody();
+        return ResponseEntity.ok(userId);
     }
 }

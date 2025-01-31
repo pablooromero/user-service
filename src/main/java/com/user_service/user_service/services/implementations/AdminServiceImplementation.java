@@ -1,30 +1,33 @@
 package com.user_service.user_service.services.implementations;
 
 
-import com.user_service.user_service.config.RabbitMQConfig;
-import com.user_service.user_service.dtos.UserDTO;
+import com.user_service.user_service.dtos.NewUserRecord;
+import com.user_service.user_service.dtos.UserRecord;
 import com.user_service.user_service.enums.RoleType;
-import com.user_service.user_service.models.EmailEvent;
-import com.user_service.user_service.exceptions.IllegalAttributeException;
+import com.user_service.user_service.enums.Status;
+import com.user_service.user_service.exceptions.UserException;
 import com.user_service.user_service.models.UserEntity;
 import com.user_service.user_service.repositories.UserRepository;
 import com.user_service.user_service.services.AdminService;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import com.user_service.user_service.utils.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class AdminServiceImplementation implements AdminService {
 
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
-    private RabbitTemplate rabbitTemplate;
+    private PasswordEncoder passwordEncoder;
 
 
     @Override
@@ -34,75 +37,97 @@ public class AdminServiceImplementation implements AdminService {
 
 
     @Override
-    public ResponseEntity<List<UserEntity>> getAllUsers() {
-        List<UserEntity> users = userRepository.findAll();
+    public ResponseEntity<Set<UserRecord>> getAllUsers() {
+        Set<UserRecord> users = userRepository.findAll()
+                .stream()
+                .map(user -> new UserRecord(user.getId(), user.getUsername(), user.getEmail(), user.getRole()))
+                .collect(Collectors.toSet());
+
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
-
-    private  UserEntity createUserBody(UserDTO userDTO) throws IllegalAttributeException {
-        validateUser(userDTO);
-
-        UserEntity userEntity = new UserEntity();
-        userEntity.setUsername(userDTO.getUsername());
-        userEntity.setEmail(userDTO.getEmail());
-        userEntity.setPassword(userDTO.getPassword());
-
-        return userEntity;
-    }
-
-    //TODO Refactor para llamar al register
-    //TODO Implementar verificación de mail
+    @Transactional(rollbackFor = {Exception.class})
     @Override
-    public ResponseEntity<UserDTO> createUser(UserDTO userDTO) throws IllegalAttributeException {
-
-        UserEntity userEntity = createUserBody(userDTO);
-        userEntity.setRole(RoleType.USER);
-
-        UserEntity savedUser = saveUser(userEntity);
-
-        rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE_NAME,
-                "user.email",
-                new EmailEvent(userDTO.getEmail(), "Bienvenido a nuestra plataforma", "Gracias por registrarte " + userDTO.getUsername())
-        );
-
-        return new ResponseEntity<>(new UserDTO(savedUser), HttpStatus.CREATED);
+    public void validateUser(Long id) throws UserException {
+        UserEntity user = userRepository.findById(id).orElseThrow(()->new UserException(Constants.USR_NOT_EXIST, HttpStatus.NOT_FOUND));
+        user.setStatus(Status.ACTIVE);
+        userRepository.save(user);
     }
 
     @Override
-    public ResponseEntity<UserDTO> createAdmin(UserDTO userDTO) throws IllegalAttributeException {
+    public ResponseEntity<UserRecord> getUserById(Long id) throws UserException {
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(()->new UserException(Constants.USR_NOT_EXIST, HttpStatus.NOT_FOUND));
 
-        UserEntity userEntity = createUserBody(userDTO);
-        userEntity.setRole(RoleType.ADMIN);
+        return new ResponseEntity<>(new UserRecord(user.getId(), user.getUsername(),user.getEmail(),user.getRole()), HttpStatus.OK);
+    }
 
-        UserEntity savedUser = saveUser(userEntity);
-        return new ResponseEntity<>(new UserDTO(savedUser), HttpStatus.CREATED);
+    @Transactional(rollbackFor = {UserException.class})
+    @Override
+    public ResponseEntity<UserRecord> createAdmin(NewUserRecord newUserRecord) throws UserException {
+        validateUsername(newUserRecord.username());
+        validatePassword(newUserRecord.password());
+        validateEmail(newUserRecord.email());
+
+        UserEntity userEntity = new UserEntity(newUserRecord.username(), passwordEncoder.encode(newUserRecord.password()), newUserRecord.email(), RoleType.ADMIN);
+        userEntity = saveUser(userEntity);
+
+        return new ResponseEntity<>(new UserRecord(userEntity.getId(), userEntity.getUsername(),userEntity.getEmail(),userEntity.getRole()), HttpStatus.CREATED);
     }
 
 
     @Override
-    public void validateUser(UserDTO userDTO) throws IllegalAttributeException {
-
-        if (userDTO.getEmail() == null || userDTO.getEmail().trim().isEmpty()) {
-            throw new IllegalAttributeException("Email cannot be null or empty");
+    public ResponseEntity<String> deleteUserById(Long id) throws UserException {
+        if (!existUserById(id)) {
+            throw new UserException(Constants.USR_NOT_EXIST, HttpStatus.NOT_FOUND);
+        }else{
+            userRepository.deleteById(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
 
-        String emailPattern = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-        if (!Pattern.matches(emailPattern, userDTO.getEmail())) {
-            throw new IllegalAttributeException("Invalid email format");
-        }
+    }
 
-        if (userRepository.existsByEmail(userDTO.getEmail())) {
-            throw new IllegalAttributeException("Email is already in use");
-        }
+    @Override
+    public boolean existUserById(Long id) throws UserException {
+        return userRepository.existsById(id);
+    }
 
-        if (userDTO.getUsername() == null || userDTO.getUsername().trim().isEmpty()) {
-            throw new IllegalAttributeException("Username cannot be null or empty");
-        }
+    @Override
+    public boolean existUserByEmail(String email) throws UserException {
+        return userRepository.existsByEmail(email);
+    }
 
-        if (userDTO.getUsername().length() < 3) {
-            throw new IllegalAttributeException("Username must be at least 3 characters long");
+    @Override
+    public void validateUsername(String username) throws UserException {
+        if (username == null || username.isBlank()) {
+            throw new UserException(Constants.EMPTY_US);
         }
+    }
+
+    @Override
+    public void validatePassword(String password) throws UserException {
+        if (password == null || password.isBlank()) {
+            throw new UserException(Constants.EMPTY_PASS);
+        }
+    }
+
+    @Override
+    public void validateEmail(String email) throws UserException {
+        if (existUserByEmail(email)) {
+            throw new UserException(Constants.EXIST_EMAIL,HttpStatus.CONFLICT);
+         }else {
+            if (!validMail(email)) {
+                throw new UserException(Constants.INV_EMAIL,HttpStatus.CONFLICT);
+            }
+        }
+    }
+
+    public boolean validMail(String email) {
+        for (String dom : Constants.URL_MAILS) {
+            if (email.endsWith(dom)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -1,17 +1,20 @@
 package com.user_service.user_service.services.implementations;
 
-import com.user_service.user_service.dtos.UserDTO;
-import com.user_service.user_service.exceptions.IllegalAttributeException;
+import com.user_service.user_service.config.SecurityUtils;
+import com.user_service.user_service.dtos.*;
+import com.user_service.user_service.exceptions.UserException;
 import com.user_service.user_service.exceptions.UserNotFoundException;
 import com.user_service.user_service.models.UserEntity;
 import com.user_service.user_service.repositories.UserRepository;
+import com.user_service.user_service.services.AdminService;
 import com.user_service.user_service.services.UserService;
+import com.user_service.user_service.utils.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.regex.Pattern;
 
 @Service
 public class UserServiceImplementation implements UserService {
@@ -19,12 +22,29 @@ public class UserServiceImplementation implements UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private SecurityUtils securityUtils;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AdminService adminService;
+
 
     @Override
-    public ResponseEntity<Long> getUserByEmail(String email) throws UserNotFoundException {
+    public ResponseEntity<Long> getUserIdByEmail(String email) throws UserNotFoundException {
         UserEntity user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException("User not found with mail: " + email));
 
         return new ResponseEntity<>(user.getId(), HttpStatus.OK);
+    }
+
+    @Override
+    public UserRegistrationRecord getUserByEmail(String email) throws UserException {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserException(Constants.USR_NOT_EXIST + email));
+
+        return new UserRegistrationRecord(user.getId(), user.getUsername(),user.getEmail(),user.getRole(), user.getStatus());
     }
 
 
@@ -34,54 +54,55 @@ public class UserServiceImplementation implements UserService {
     }
 
 
-    //TODO Refactor para solo poder actualizar su perfil
     @Override
-    public ResponseEntity<UserDTO> updateUser(UserDTO userDTO) throws UserNotFoundException, IllegalAttributeException {
-        validateUser(userDTO);
+    public ResponseEntity<UserRecord> updateUser(Long id, UpdateUserRecord updateUserRecord) throws UserException {
+        adminService.validateUsername(updateUserRecord.username());
+        adminService.validatePassword(updateUserRecord.password());
 
-        UserEntity existingUser = userRepository.findById(userDTO.getId())
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userDTO.getId()));
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(()->new UserException(Constants.USR_NOT_EXIST, HttpStatus.NOT_FOUND));
 
-        existingUser.setUsername(userDTO.getUsername());
-        existingUser.setEmail(userDTO.getEmail());
-        existingUser.setPassword(userDTO.getPassword());
-        existingUser.setRole(userDTO.getRole());
+        user.setUsername(updateUserRecord.username());
+        user.setPassword(updateUserRecord.password());
 
-        UserEntity savedUser = saveUser(existingUser);
+        user = saveUser(user);
 
-        return new ResponseEntity<>(new UserDTO(savedUser), HttpStatus.OK);
+        return new ResponseEntity<>(new UserRecord(user.getId(), user.getUsername(),user.getEmail(),user.getRole()), HttpStatus.OK);
+
     }
 
-    //TODO Refactor para solo poder borrar su usuario
+
     @Override
-    public ResponseEntity<String> deleteUser(Long id) throws UserNotFoundException {
-        userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
+    public void deleteUserById(Long id) throws UserException {
+        if (!adminService.existUserById(id)){
+            throw new UserException(Constants.USR_NOT_EXIST, HttpStatus.NOT_FOUND);
+        }else {
+            userRepository.deleteById(id);
+        }
 
-        userRepository.deleteById(id);
-
-        return new ResponseEntity<>("User deleted!", HttpStatus.OK);
     }
 
     @Override
-    public void validateUser(UserDTO userDTO) throws IllegalAttributeException {
+    public AuthResponseDTO changePassword(ChangePasswordDTO changePasswordDTO, Authentication authentication) throws UserNotFoundException {
+        UserEntity user = securityUtils.getAuthenticatedUser(authentication);
 
-        if (userDTO.getEmail() == null || userDTO.getEmail().trim().isEmpty()) {
-            throw new IllegalAttributeException("Email cannot be null or empty");
+        if (!passwordEncoder.matches(changePasswordDTO.getCurrentPassword(), user.getPassword())) {
+            return new AuthResponseDTO("-", "Current password is incorrect");
         }
 
-        String emailPattern = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
-        if (!Pattern.matches(emailPattern, userDTO.getEmail())) {
-            throw new IllegalAttributeException("Invalid email format");
+        if (changePasswordDTO.getNewPassword().length() < 8) {
+            return new AuthResponseDTO("-", "New password must be at least 8 characters long");
         }
 
-        if (userDTO.getUsername() == null || userDTO.getUsername().trim().isEmpty()) {
-            throw new IllegalAttributeException("Username cannot be null or empty");
+        if (passwordEncoder.matches(changePasswordDTO.getNewPassword(), user.getPassword())) {
+            return new AuthResponseDTO("-", "New password cannot be the same as the current password");
         }
 
-        if (userDTO.getUsername().length() < 3) {
-            throw new IllegalAttributeException("Username must be at least 3 characters long");
-        }
+        user.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
+        saveUser(user);
+
+        return new AuthResponseDTO("-", "Password updated successfully");
     }
+
 
 }

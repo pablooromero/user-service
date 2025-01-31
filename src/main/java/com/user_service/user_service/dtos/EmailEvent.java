@@ -1,4 +1,4 @@
-package com.user_service.user_service.models;
+package com.user_service.user_service.dtos;
 
 public class EmailEvent {
     private String to;

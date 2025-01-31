@@ -1,6 +1,7 @@
 package com.user_service.user_service.models;
 
 import com.user_service.user_service.enums.RoleType;
+import com.user_service.user_service.enums.Status;
 import jakarta.persistence.*;
 
 @Entity
@@ -19,6 +20,27 @@ public class UserEntity {
     private String password;
 
     private RoleType role = RoleType.USER;
+
+    private Status status = Status.PENDING;
+
+    public UserEntity(Long id, String username, String email, String password, RoleType role) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
+
+    public UserEntity(String username, String password, String email, RoleType role) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+    }
+
+    public UserEntity() {
+
+    }
 
     public Long getId() {
         return id;
@@ -54,5 +76,13 @@ public class UserEntity {
 
     public void setRole(RoleType role) {
         this.role = role;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 }

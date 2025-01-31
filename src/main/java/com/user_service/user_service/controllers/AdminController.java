@@ -1,11 +1,12 @@
 package com.user_service.user_service.controllers;
 
+import com.user_service.user_service.dtos.NewUserRecord;
 import com.user_service.user_service.dtos.UserDTO;
+import com.user_service.user_service.dtos.UserRecord;
 import com.user_service.user_service.enums.RoleType;
-import com.user_service.user_service.exceptions.IllegalAttributeException;
-import com.user_service.user_service.exceptions.UserNotFoundException;
-import com.user_service.user_service.models.UserEntity;
+import com.user_service.user_service.exceptions.UserException;
 import com.user_service.user_service.services.AdminService;
+import com.user_service.user_service.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -16,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("api/admins")
@@ -24,6 +25,9 @@ public class AdminController {
 
     @Autowired
     private AdminService adminService;
+
+    @Autowired
+    private UserService userService;
 
     @Operation(summary = "Get all users", description = "Retrieve a list of all users")
     @ApiResponses({
@@ -35,30 +39,19 @@ public class AdminController {
                     )
             )
     })
-    @GetMapping
-    public ResponseEntity<List<UserEntity>> getAllUsers() {
+    @GetMapping("/users/all")
+    public ResponseEntity<Set<UserRecord>> getAllUsers() {
         return adminService.getAllUsers();
     }
 
-    @Operation(summary = "Create a new user", description = "Create a new user and associate the details")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User user created successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class))
-            ),
-            @ApiResponse(responseCode = "400", description = "Validation errors",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "Email format is invalid")
-                    )
-            ),
-            @ApiResponse(responseCode = "409", description = "Email already in use",
-                    content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "Email is already in use")
-                    )
-            )
-    })
-    @PostMapping
-    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) throws IllegalAttributeException {
-        return adminService.createUser(userDTO);
+    @GetMapping("/users/{id}")
+    public ResponseEntity<UserRecord> getUserById(@PathVariable Long id) throws UserException {
+        return adminService.getUserById(id);
+    }
+
+    @PostMapping("/admin")
+    public ResponseEntity<UserRecord> createAdmin(@RequestBody NewUserRecord newUserRecord) throws UserException {
+        return adminService.createAdmin(newUserRecord);
     }
 
     @Operation(summary = "Delete a user", description = "Delete an existing user by their ID")
@@ -70,10 +63,9 @@ public class AdminController {
                     )
             )
     })
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable Long id) throws UserNotFoundException {
-//        return adminService.(id);
-        return  null;
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) throws UserException {
+        return adminService.deleteUserById(id);
     }
 
 
@@ -81,7 +73,7 @@ public class AdminController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Successful retrieval of roles")
     })
-    @GetMapping("/roles")
+    @GetMapping("/admin/roles")
     public ResponseEntity<RoleType[]> getAllRoles() {
         return ResponseEntity.ok(RoleType.values());
     }

@@ -34,7 +34,7 @@ public class AdminController {
             @ApiResponse(responseCode = "200", description = "Successful retrieval of users",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = UserDTO.class),
+                            schema = @Schema(implementation = UserRecord.class),
                             examples = @ExampleObject(value = "[{\"id\": 1, \"username\": \"user1\", \"email\": \"user1@example.com\"}]")
                     )
             )
@@ -44,15 +44,33 @@ public class AdminController {
         return adminService.getAllUsers();
     }
 
+
+    @Operation(summary = "Get user by ID", description = "Retrieve a user's details by their ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserRecord.class))),
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "User not found with ID: 1")))
+    })
     @GetMapping("/users/{id}")
     public ResponseEntity<UserRecord> getUserById(@PathVariable Long id) throws UserException {
         return adminService.getUserById(id);
     }
 
+    @Operation(summary = "Create an admin", description = "Create a new admin user using the provided details")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Admin created successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserRecord.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "Invalid user data provided")))
+    })
     @PostMapping("/admin")
     public ResponseEntity<UserRecord> createAdmin(@RequestBody NewUserRecord newUserRecord) throws UserException {
         return adminService.createAdmin(newUserRecord);
     }
+
 
     @Operation(summary = "Delete a user", description = "Delete an existing user by their ID")
     @ApiResponses({

@@ -33,6 +33,16 @@ public class UserController {
     private JwtUtils jwtUtils;
 
 
+    @Operation(summary = "Get authenticated user details",
+            description = "Extracts the email from the 'Authorization' token header and returns the user's details")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserRecord.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "User not found with ID: 1")))
+    })
     @GetMapping()
     public ResponseEntity<UserRecord> getUserById(HttpServletRequest request) throws UserException, UserNotFoundException {
         String email = jwtUtils.getEmailFromToken(request.getHeader("Authorization"));
@@ -43,7 +53,7 @@ public class UserController {
     @Operation(summary = "Update an existing user", description = "Update an existing user's details by their ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "User updated successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class))
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UpdateUserRecord.class))
             ),
             @ApiResponse(responseCode = "400", description = "Validation errors",
                     content = @Content(mediaType = "application/json",
@@ -83,6 +93,15 @@ public class UserController {
     }
 
 
+    @Operation(summary = "Get user ID by email",
+            description = "Retrieves the user's ID using their email address")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User ID retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = Long.class))),
+            @ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "User not found with email: test@example.com")))
+    })
     @GetMapping("/private/email/{email}")
     public ResponseEntity<Long> getUserIdByEmail(@PathVariable String email) throws UserNotFoundException {
         Long userId = userService.getUserIdByEmail(email).getBody();

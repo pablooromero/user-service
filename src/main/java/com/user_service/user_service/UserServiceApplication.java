@@ -1,6 +1,7 @@
 package com.user_service.user_service;
 
 import com.user_service.user_service.enums.RoleType;
+import com.user_service.user_service.enums.Status;
 import com.user_service.user_service.models.UserEntity;
 import com.user_service.user_service.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,20 +24,13 @@ public class UserServiceApplication {
 	@Bean
 	public CommandLineRunner init(UserRepository userRepository) {
 		return args -> {
-			UserEntity user = new UserEntity();
-			user.setUsername("testnombre");
-			user.setPassword("testpassword");
-			user.setEmail("test@test.com");
-			user.setRole(RoleType.USER);
-
-			userRepository.save(user);
-
 
 			UserEntity admin = new UserEntity();
 			admin.setUsername("admin");
 			admin.setPassword(passwordEncoder.encode("adminpassword"));
 			admin.setEmail("admin@admin.com");
 			admin.setRole(RoleType.ADMIN);
+			admin.setStatus(Status.ACTIVE);
 			userRepository.save(admin);
 		};
 	}

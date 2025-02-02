@@ -38,7 +38,7 @@ public class AuthController {
     @Operation(summary = "Login user", description = "Authenticate a user and generate a JWT token")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Login successful",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponseDTO.class))),
+                    content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "401", description = "Invalid email or password",
                     content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "Invalid email or password"))),
             @ApiResponse(responseCode = "500", description = "Internal server error during login",
@@ -53,7 +53,7 @@ public class AuthController {
     @Operation(summary = "Register user", description = "Create a new user and generate a JWT token")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "User registered successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponseDTO.class))),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserRecord.class))),
             @ApiResponse(responseCode = "400", description = "Missing or invalid fields",
                     content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "Every field is required."))),
             @ApiResponse(responseCode = "400", description = "Email or username already in use",

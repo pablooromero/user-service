@@ -107,7 +107,7 @@ public class AuthServiceImplementation implements AuthService {
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "user.email",
                 new EmailEvent(userEntity.getEmail(), Constants.SUC_REG, Constants.BODY_MAIL +
                         "\nConfirm your user here: " +
-                        "http://localhost:8080/API/auth/validate/" + jwt));
+                        "http://localhost:8080/api/auth/validate/" + jwt));
 
         logger.info(Constants.SEND_EMAIL_SUCCESSFULLY, userEntity.getEmail());
     }

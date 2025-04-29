@@ -1,6 +1,7 @@
 package com.user_service.user_service.controllers;
 
 import com.user_service.user_service.dtos.UserDTO;
+import com.user_service.user_service.exceptions.UserException;
 import com.user_service.user_service.services.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,12 +21,12 @@ public class AdminController {
     }
 
     @GetMapping("/users/{id}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) throws UserException {
         return adminService.getUserById(id);
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<String> deleteUserById(@PathVariable Long id) {
+    public ResponseEntity<String> deleteUserById(@PathVariable Long id) throws UserException {
         return adminService.deleteUserById(id);
     }
 

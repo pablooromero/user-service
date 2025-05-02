@@ -8,6 +8,7 @@ import com.user_service.user_service.repositories.UserRepository;
 import com.user_service.user_service.services.AdminService;
 import com.user_service.user_service.services.UserService;
 import com.user_service.user_service.utils.Constants;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,21 +19,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImplementation implements UserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImplementation.class);
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private AdminService adminService;
+    private final AdminService adminService;
 
-    @Autowired
-    private SecurityUtils securityUtils;
+    private final SecurityUtils securityUtils;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserEntity saveUser(UserEntity user) {

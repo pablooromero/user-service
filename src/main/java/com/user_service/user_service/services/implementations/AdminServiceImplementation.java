@@ -9,9 +9,9 @@ import com.user_service.user_service.models.UserEntity;
 import com.user_service.user_service.repositories.UserRepository;
 import com.user_service.user_service.services.AdminService;
 import com.user_service.user_service.utils.Constants;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,15 +21,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AdminServiceImplementation implements AdminService {
 
     private static final Logger logger = LoggerFactory.getLogger(AdminServiceImplementation.class);
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserEntity saveUser(UserEntity user) {

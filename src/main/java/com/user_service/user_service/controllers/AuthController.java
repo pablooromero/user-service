@@ -7,26 +7,23 @@ import com.user_service.user_service.services.AdminService;
 import com.user_service.user_service.services.AuthService;
 import com.user_service.user_service.services.UserService;
 import com.user_service.user_service.utils.Constants;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private AdminService adminService;
+    private final AdminService adminService;
 
-    @Autowired
-    private JwtUtils jwtUtils;
+    private final JwtUtils jwtUtils;
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginUserDTO loginUserDTO) throws UserException {

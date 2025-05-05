@@ -17,5 +17,7 @@ public interface UserService {
 
     void deleteUserById(Long id) throws UserException;
 
+    UserEntity findByEmail(String email) throws UserException;
+
     AuthDTO changePassword(ChangePasswordRequest changePasswordRequest, Authentication authentication) throws UserException;
 }

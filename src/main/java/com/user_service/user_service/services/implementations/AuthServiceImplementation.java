@@ -3,6 +3,7 @@ package com.user_service.user_service.services.implementations;
 import com.user_service.user_service.config.JwtUtils;
 import com.user_service.user_service.config.RabbitMQConfig;
 import com.user_service.user_service.dtos.*;
+import com.user_service.user_service.enums.AuthProvider;
 import com.user_service.user_service.enums.RoleType;
 import com.user_service.user_service.enums.UserStatus;
 import com.user_service.user_service.exceptions.UserException;
@@ -82,7 +83,7 @@ public class AuthServiceImplementation implements AuthService {
         adminService.validatePassword(newUser.password());
         adminService.validateEmail(newUser.email());
 
-        UserEntity userEntity = new UserEntity(newUser.name(), newUser.lastName(), newUser.email(), passwordEncoder.encode(newUser.password()), RoleType.USER, UserStatus.PENDING );
+        UserEntity userEntity = new UserEntity(newUser.name(), newUser.lastName(), newUser.email(), passwordEncoder.encode(newUser.password()), RoleType.USER, UserStatus.PENDING, AuthProvider.LOCAL );
         userRepository.save(userEntity);
 
         UserDTO userDTO = new UserDTO(userEntity.getId(), userEntity.getName(), userEntity.getLastName(), userEntity.getEmail(), userEntity.getRole(), userEntity.getStatus());
@@ -105,5 +106,4 @@ public class AuthServiceImplementation implements AuthService {
 
         logger.info(Constants.SEND_EMAIL_SUCCESSFULLY, userEntity.getEmail());
     }
-
 }

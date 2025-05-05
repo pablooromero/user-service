@@ -2,6 +2,7 @@ package com.user_service.user_service.services.implementations;
 
 import com.user_service.user_service.dtos.CreateUserRequest;
 import com.user_service.user_service.dtos.UserDTO;
+import com.user_service.user_service.enums.AuthProvider;
 import com.user_service.user_service.enums.RoleType;
 import com.user_service.user_service.enums.UserStatus;
 import com.user_service.user_service.exceptions.UserException;
@@ -83,7 +84,7 @@ public class AdminServiceImplementation implements AdminService {
         validatePassword(newUser.password());
         validateEmail(newUser.email());
 
-        UserEntity userEntity = new UserEntity(newUser.name(), newUser.lastName(), newUser.email(), passwordEncoder.encode(newUser.password()), RoleType.ADMIN, UserStatus.ACTIVE);
+        UserEntity userEntity = new UserEntity(newUser.name(), newUser.lastName(), newUser.email(), passwordEncoder.encode(newUser.password()), RoleType.ADMIN, UserStatus.ACTIVE, AuthProvider.LOCAL);
         saveUser(userEntity);
 
         logger.info(Constants.ADMIN_CREATED_SUCCESSFULLY);

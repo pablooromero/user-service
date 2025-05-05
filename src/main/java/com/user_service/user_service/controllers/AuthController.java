@@ -8,7 +8,7 @@ import com.user_service.user_service.services.AuthService;
 import com.user_service.user_service.services.UserService;
 import com.user_service.user_service.utils.Constants;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 

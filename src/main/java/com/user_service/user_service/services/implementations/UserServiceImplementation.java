@@ -11,7 +11,6 @@ import com.user_service.user_service.utils.Constants;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -102,6 +101,14 @@ public class UserServiceImplementation implements UserService {
             userRepository.deleteById(id);
             logger.info(Constants.USER_DELETED_SUCCESSFULLY, id);
         }
+    }
+
+    @Override
+    public UserEntity findByEmail(String email) throws UserException {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserException(Constants.USER_NOT_FOUND_WITH_EMAIL + email, HttpStatus.NOT_FOUND));
+
+        return user;
     }
 
     @Override

@@ -59,7 +59,7 @@ public class JwtUtils {
         return (tokenUsername.equals(username) && !isTokenExpired(token));
     }
 
-    private Claims parseClaims(String token) {
+    public Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
@@ -67,7 +67,7 @@ public class JwtUtils {
                 .getPayload();
     }
 
-    private boolean isTokenExpired(String token) {
+    public boolean isTokenExpired(String token) {
         return parseClaims(token).getExpiration().before(new Date());
     }
 

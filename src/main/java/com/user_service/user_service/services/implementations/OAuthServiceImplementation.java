@@ -38,7 +38,7 @@ public class OAuthServiceImplementation implements OAuthService {
         newUser.setLastName(lastName);
         newUser.setPassword("");
         newUser.setEmail(email);
-        newUser.setStatus(UserStatus.PENDING);
+        newUser.setStatus(UserStatus.ACTIVE);
         newUser.setRole(RoleType.USER);
         newUser.setAuthProvider(AuthProvider.GOOGLE);
         userRepository.save(newUser);

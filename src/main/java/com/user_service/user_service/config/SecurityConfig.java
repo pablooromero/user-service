@@ -54,6 +54,7 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/login/oauth2/code/**"
                         ).permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

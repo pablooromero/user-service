@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
@@ -30,6 +31,7 @@ public class AdminController {
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = UserDTO.class)))
     @GetMapping("/users")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity <Set<UserDTO>> getAllUsers() {
         return adminService.getAllUsers();
     }
@@ -43,6 +45,7 @@ public class AdminController {
                     content = @Content)
     })
     @GetMapping("/users/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) throws UserException {
         return adminService.getUserById(id);
     }
@@ -61,6 +64,7 @@ public class AdminController {
                     content = @Content)
     })
     @PostMapping()
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<UserDTO> createAdmin(@RequestBody CreateUserRequest userDTO) throws UserException {
         return adminService.createAdmin(userDTO);
     }
@@ -74,6 +78,7 @@ public class AdminController {
                     content = @Content)
     })
     @DeleteMapping("/users/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<String> deleteUserById(@PathVariable Long id) throws UserException {
         return adminService.deleteUserById(id);
     }

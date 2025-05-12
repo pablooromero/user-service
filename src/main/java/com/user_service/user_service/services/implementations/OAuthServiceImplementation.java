@@ -20,12 +20,6 @@ public class OAuthServiceImplementation implements OAuthService {
     private final UserRepository userRepository;
 
     @Override
-    public String processOAuthLogin(String email, String name, String lastName) {
-        UserEntity user = findOrCreateByEmail(email, name, lastName);
-        return jwtUtils.generateToken(user.getEmail(), user.getId(), String.valueOf(user.getRole()));
-    }
-
-    @Override
     public UserEntity findOrCreateByEmail(String email, String name, String lastName) {
         Optional<UserEntity> optionalUser = userRepository.findByEmail(email);
 

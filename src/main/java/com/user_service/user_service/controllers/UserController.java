@@ -1,6 +1,5 @@
 package com.user_service.user_service.controllers;
 
-import com.user_service.user_service.config.JwtUtils;
 import com.user_service.user_service.dtos.UpdateUserRequest;
 import com.user_service.user_service.dtos.UserDTO;
 import com.user_service.user_service.exceptions.UserException;
@@ -13,9 +12,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Users", description = "User Controller")
@@ -29,7 +30,17 @@ public class UserController {
 
     private final AdminService adminService;
 
-    private final JwtUtils jwtUtils;
+    private Long getUserIdFromAuth(Authentication authentication) throws UserException {
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Jwt)) {
+            throw new UserException("Usuario no autenticado o token inválido.", HttpStatus.UNAUTHORIZED);
+        }
+        Jwt jwtPrincipal = (Jwt) authentication.getPrincipal();
+        String userIdString = jwtPrincipal.getClaimAsString("id");
+        if (userIdString == null) {
+            throw new UserException("Información de usuario (ID) no encontrada en el token.", HttpStatus.BAD_REQUEST);
+        }
+        return Long.parseLong(userIdString);
+    }
 
     @Operation(summary = "Get authenticated user's information")
     @ApiResponses(value = {
@@ -41,11 +52,10 @@ public class UserController {
                     content = @Content)
     })
     @GetMapping()
-    public ResponseEntity<UserDTO> getUserById(HttpServletRequest request) throws UserException {
-        String email = jwtUtils.getEmailFromToken(request.getHeader("Authorization"));
-        Long id = userService.getUserIdByEmail(email).getBody();
+    public ResponseEntity<UserDTO> getAuthenticatedUserInfo(Authentication authentication) throws UserException {
+        Long userId = getUserIdFromAuth(authentication);
 
-        return adminService.getUserById(id);
+        return adminService.getUserById(userId);
     }
 
 
@@ -61,11 +71,9 @@ public class UserController {
                     content = @Content)
     })
     @PutMapping()
-    public ResponseEntity<UserDTO> updateUser(@RequestBody UpdateUserRequest updateUserRequest, HttpServletRequest request) throws UserException {
-        String email = jwtUtils.getEmailFromToken(request.getHeader("Authorization"));
-        Long id = userService.getUserIdByEmail(email).getBody();
-
-        return userService.updateUser(id, updateUserRequest);
+    public ResponseEntity<UserDTO> updateUser(@RequestBody UpdateUserRequest updateUserRequest, Authentication authentication) throws UserException {
+        Long userId = getUserIdFromAuth(authentication);
+        return userService.updateUser(userId, updateUserRequest);
     }
 
 
@@ -79,11 +87,10 @@ public class UserController {
                     content = @Content)
     })
     @DeleteMapping()
-    public ResponseEntity<Void> deleteUserById(HttpServletRequest request) throws UserException {
-        String email = jwtUtils.getEmailFromToken(request.getHeader("Authorization"));
-        ResponseEntity<Long> id = userService.getUserIdByEmail(email);
-        userService.deleteUserById(id.getBody());
+    public ResponseEntity<Void> deleteUser(Authentication authentication) throws UserException {
+        Long userId = getUserIdFromAuth(authentication);
 
+        userService.deleteUserById(userId);
         return ResponseEntity.ok().build();
     }
 

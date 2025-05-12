@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -67,6 +68,9 @@ public class AuthController {
     @ApiResponse(responseCode = "400", description = "Invalid current password or bad input", content = @Content)
     @PutMapping("/change-password")
     public ResponseEntity<AuthDTO> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest, Authentication authentication) throws UserException {
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Jwt)) {
+            throw new UserException("Usuario no autenticado o token inválido.", HttpStatus.UNAUTHORIZED);
+        }
         AuthDTO response = userService.changePassword(changePasswordRequest, authentication);
         if(response.message().equals("Password updated successfully")){
             return ResponseEntity.ok(response);

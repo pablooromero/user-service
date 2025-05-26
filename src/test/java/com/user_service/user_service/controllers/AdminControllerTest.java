@@ -120,6 +120,7 @@ public class AdminControllerTest {
     @Test
     @DisplayName("GET /api/admins/users/{id} - Debería devolver 404 si es ADMIN pero usuario no existe")
     void getUserById_asAdmin_whenUserNotExists_shouldReturnNotFound() throws Exception {
+        String errorMessage = "Usuario no encontrado";
         when(adminService.getUserById(99L))
                 .thenThrow(new UserException("Usuario no encontrado", HttpStatus.NOT_FOUND));
 
@@ -127,7 +128,7 @@ public class AdminControllerTest {
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))
                                 .jwt(token -> token.claim("role", "ADMIN"))))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("Usuario no encontrado"));
+                .andExpect(jsonPath("$.message", is(errorMessage)));
     }
 
 
@@ -152,6 +153,8 @@ public class AdminControllerTest {
     @DisplayName("POST /api/admins - Debería devolver 409 si email ya existe (manejado por servicio)")
     void createAdmin_asAdmin_whenEmailExists_shouldReturnConflict() throws Exception {
         CreateUserRequest createRequest = new CreateUserRequest("Existing", "Admin", "admin@example.com", "password");
+        String errorMessage = "Email ya existe";
+
         when(adminService.createAdmin(any(CreateUserRequest.class)))
                 .thenThrow(new UserException("Email ya existe", HttpStatus.CONFLICT));
 
@@ -161,13 +164,15 @@ public class AdminControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isConflict())
-                .andExpect(content().string("Email ya existe"));
+                .andExpect(jsonPath("$.message", is(errorMessage)));
     }
 
 
     @Test
     @DisplayName("DELETE /api/admins/users/{id} - Debería eliminar usuario si es ADMIN")
     void deleteUserById_asAdmin_shouldDeleteUser() throws Exception {
+        String successMessage = "Usuario eliminado exitosamente";
+
         when(adminService.deleteUserById(1L))
                 .thenReturn(ResponseEntity.ok("Usuario eliminado exitosamente"));
 
@@ -175,12 +180,14 @@ public class AdminControllerTest {
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))
                                 .jwt(token -> token.claim("role", "ADMIN"))))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Usuario eliminado exitosamente"));
+                .andExpect(content().string(successMessage));
     }
 
     @Test
     @DisplayName("DELETE /api/admins/users/{id} - Debería devolver 404 si es ADMIN pero usuario no existe")
     void deleteUserById_asAdmin_whenUserNotExists_shouldReturnNotFound() throws Exception {
+        String errorMessage = "Usuario no encontrado para eliminar";
+
         when(adminService.deleteUserById(99L))
                 .thenThrow(new UserException("Usuario no encontrado para eliminar", HttpStatus.NOT_FOUND));
 
@@ -188,6 +195,6 @@ public class AdminControllerTest {
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))
                                 .jwt(token -> token.claim("role", "ADMIN"))))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("Usuario no encontrado para eliminar"));
+                .andExpect(jsonPath("$.message", is(errorMessage)));
     }
 }

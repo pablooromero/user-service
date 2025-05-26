@@ -12,6 +12,7 @@ import com.user_service.user_service.exceptions.UserException;
 import com.user_service.user_service.services.AdminService;
 import com.user_service.user_service.services.OAuthService;
 import com.user_service.user_service.services.UserService;
+import com.user_service.user_service.utils.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -127,8 +128,9 @@ class UserControllerTest {
     @DisplayName("PUT /api/users - Debería devolver error si el servicio lanza UserException")
     void updateUser_whenServiceThrowsException_shouldReturnError() throws Exception {
         UpdateUserRequest updateRequest = new UpdateUserRequest("Test", "User", "password");
+        String errorMessage = "Error al actualizar";
         when(userService.updateUser(eq(TEST_USER_ID), any(UpdateUserRequest.class)))
-                .thenThrow(new UserException("Error al actualizar", HttpStatus.INTERNAL_SERVER_ERROR));
+                .thenThrow(new UserException(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR));
 
         mockMvc.perform(put("/api/users")
                         .with(jwt().jwt(token -> token
@@ -138,7 +140,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isInternalServerError())
-                .andExpect(content().string("Error al actualizar"));
+                .andExpect(jsonPath("$.message", is(errorMessage)));
     }
 
     @Test
@@ -172,12 +174,14 @@ class UserControllerTest {
     @DisplayName("GET /api/users/private/email/{email} - Debería devolver 404 si el email no existe")
     void getUserIdByEmail_whenEmailNotFound_shouldReturnNotFound() throws Exception {
         String nonExistentEmail = "unknown@example.com";
+        String errorMessage = Constants.USER_NOT_FOUND_WITH_EMAIL + nonExistentEmail;
+
         when(userService.getUserIdByEmail(eq(nonExistentEmail)))
-                .thenThrow(new UserException("Usuario no encontrado por email", HttpStatus.NOT_FOUND));
+                .thenThrow(new UserException(errorMessage, HttpStatus.NOT_FOUND));
 
         mockMvc.perform(get("/api/users/private/email/" + nonExistentEmail)
                         .with(jwt()))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("Usuario no encontrado por email"));
+                .andExpect(jsonPath("$.message", is(errorMessage)));
     }
 }

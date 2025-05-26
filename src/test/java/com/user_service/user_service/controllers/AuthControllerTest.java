@@ -94,14 +94,16 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /api/auth/login - Debería devolver 401 con credenciales inválidas")
     void login_withInvalidCredentials_shouldReturnUnauthorized() throws Exception {
+        String errorMessage = Constants.INV_CRED;
+
         when(authService.loginUser(any(LoginUserDTO.class)))
-                .thenThrow(new UserException("Credenciales inválidas", HttpStatus.UNAUTHORIZED));
+                .thenThrow(new UserException(Constants.INV_CRED, HttpStatus.UNAUTHORIZED));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginUserDTO)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(content().string("Credenciales inválidas"));
+                .andExpect(jsonPath("$.message", is(errorMessage)));
     }
 
     @Test
@@ -122,14 +124,16 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /api/auth/register - Debería devolver 409 si usuario ya existe")
     void registerUser_whenUserExists_shouldReturnConflict() throws Exception {
+        String errorMessage = Constants.EXIST_EMAIL;
+
         when(authService.createUser(any(CreateUserRequest.class)))
-                .thenThrow(new UserException("Usuario ya existe", HttpStatus.CONFLICT));
+                .thenThrow(new UserException(errorMessage, HttpStatus.CONFLICT));
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createUserRequest)))
                 .andExpect(status().isConflict())
-                .andExpect(content().string("Usuario ya existe"));
+                .andExpect(jsonPath("$.message", is(errorMessage)));
     }
 
     @Test
@@ -176,12 +180,13 @@ class AuthControllerTest {
     @DisplayName("PUT /api/auth/change-password - Debería devolver 401 si no está autenticado")
     void changePassword_notAuthenticated_shouldReturnUnauthorized() throws Exception {
         ChangePasswordRequest changeRequest = new ChangePasswordRequest("oldPassword", "newPassword");
+        String errorMessage = "Usuario no autenticado o token inválido.";
 
         mockMvc.perform(put("/api/auth/change-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(changeRequest)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(content().string("Usuario no autenticado o token inválido."));
+                .andExpect(jsonPath("$.message", is(errorMessage)));
     }
 
     @Test
@@ -202,11 +207,13 @@ class AuthControllerTest {
     @DisplayName("GET /api/auth/validate/{token} - Debería devolver error si token es inválido (manejado por servicio)")
     void confirmUser_withInvalidToken_shouldReturnError() throws Exception {
         String invalidToken = "invalid.token";
+        String errorMessage = "Token inválido o expirado";
+
         when(jwtUtils.extractUsername(eq(invalidToken)))
                 .thenThrow(new UserException("Token inválido o expirado", HttpStatus.BAD_REQUEST));
 
         mockMvc.perform(get("/api/auth/validate/" + invalidToken))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Token inválido o expirado"));
+                .andExpect(jsonPath("$.message", is(errorMessage)));
     }
 }

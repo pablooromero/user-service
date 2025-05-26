@@ -39,7 +39,7 @@ public class AuthController {
     @ApiResponse(responseCode = "200", description = "Login successful, returns JWT token", content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"token\": \"<jwt-token>\"}")))
     @ApiResponse(responseCode = "401", description = "Invalid credentials", content = @Content)
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginUserDTO loginUserDTO) throws UserException {
+    public ResponseEntity<String> login(@RequestBody LoginUserDTO loginUserDTO) {
         return authService.loginUser(loginUserDTO);
     }
 
@@ -49,7 +49,7 @@ public class AuthController {
     @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
     @ApiResponse(responseCode = "409", description = "User already exists", content = @Content)
     @PostMapping("/register")
-    public ResponseEntity<UserDTO> registerUser(@RequestBody CreateUserRequest createUserRequest) throws UserException {
+    public ResponseEntity<UserDTO> registerUser(@RequestBody CreateUserRequest createUserRequest) {
         UserDTO user = authService.createUser(createUserRequest);
         return ResponseEntity.ok(user);
     }
@@ -67,7 +67,7 @@ public class AuthController {
     @ApiResponse(responseCode = "200", description = "Password changed successfully", content = @Content(schema = @Schema(implementation = AuthDTO.class)))
     @ApiResponse(responseCode = "400", description = "Invalid current password or bad input", content = @Content)
     @PutMapping("/change-password")
-    public ResponseEntity<AuthDTO> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest, Authentication authentication) throws UserException {
+    public ResponseEntity<AuthDTO> changePassword(@RequestBody ChangePasswordRequest changePasswordRequest, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Jwt)) {
             throw new UserException("Usuario no autenticado o token inválido.", HttpStatus.UNAUTHORIZED);
         }
@@ -84,7 +84,7 @@ public class AuthController {
     @ApiResponse(responseCode = "200", description = "User validated successfully")
     @ApiResponse(responseCode = "400", description = "Invalid or expired token")
     @GetMapping("/validate/{confirmationToken}")
-    public ResponseEntity<String> confirmUser(@PathVariable String confirmationToken) throws UserException {
+    public ResponseEntity<String> confirmUser(@PathVariable String confirmationToken) {
         Long id = Long.parseLong(jwtUtils.extractUsername(confirmationToken));
         adminService.validateUser(id);
 

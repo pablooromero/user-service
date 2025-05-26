@@ -30,7 +30,7 @@ public class UserController {
 
     private final AdminService adminService;
 
-    private Long getUserIdFromAuth(Authentication authentication) throws UserException {
+    private Long getUserIdFromAuth(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Jwt)) {
             throw new UserException("Usuario no autenticado o token inválido.", HttpStatus.UNAUTHORIZED);
         }
@@ -52,7 +52,7 @@ public class UserController {
                     content = @Content)
     })
     @GetMapping()
-    public ResponseEntity<UserDTO> getAuthenticatedUserInfo(Authentication authentication) throws UserException {
+    public ResponseEntity<UserDTO> getAuthenticatedUserInfo(Authentication authentication) {
         Long userId = getUserIdFromAuth(authentication);
 
         return adminService.getUserById(userId);
@@ -71,7 +71,7 @@ public class UserController {
                     content = @Content)
     })
     @PutMapping()
-    public ResponseEntity<UserDTO> updateUser(@RequestBody UpdateUserRequest updateUserRequest, Authentication authentication) throws UserException {
+    public ResponseEntity<UserDTO> updateUser(@RequestBody UpdateUserRequest updateUserRequest, Authentication authentication) {
         Long userId = getUserIdFromAuth(authentication);
         return userService.updateUser(userId, updateUserRequest);
     }
@@ -87,7 +87,7 @@ public class UserController {
                     content = @Content)
     })
     @DeleteMapping()
-    public ResponseEntity<Void> deleteUser(Authentication authentication) throws UserException {
+    public ResponseEntity<Void> deleteUser(Authentication authentication) {
         Long userId = getUserIdFromAuth(authentication);
 
         userService.deleteUserById(userId);
@@ -103,7 +103,7 @@ public class UserController {
                     content = @Content)
     })
     @GetMapping("/private/email/{email}")
-    public ResponseEntity<Long> getUserIdByEmail(@PathVariable String email) throws UserException {
+    public ResponseEntity<Long> getUserIdByEmail(@PathVariable String email) {
         Long userId = userService.getUserIdByEmail(email).getBody();
         return ResponseEntity.ok(userId);
     }

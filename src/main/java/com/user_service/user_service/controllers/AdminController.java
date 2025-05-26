@@ -2,7 +2,6 @@ package com.user_service.user_service.controllers;
 
 import com.user_service.user_service.dtos.CreateUserRequest;
 import com.user_service.user_service.dtos.UserDTO;
-import com.user_service.user_service.exceptions.UserException;
 import com.user_service.user_service.services.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -46,7 +45,7 @@ public class AdminController {
     })
     @GetMapping("/users/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) throws UserException {
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
         return adminService.getUserById(id);
     }
 
@@ -65,7 +64,7 @@ public class AdminController {
     })
     @PostMapping()
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<UserDTO> createAdmin(@RequestBody CreateUserRequest userDTO) throws UserException {
+    public ResponseEntity<UserDTO> createAdmin(@RequestBody CreateUserRequest userDTO) {
         return adminService.createAdmin(userDTO);
     }
 
@@ -79,7 +78,7 @@ public class AdminController {
     })
     @DeleteMapping("/users/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<String> deleteUserById(@PathVariable Long id) throws UserException {
+    public ResponseEntity<String> deleteUserById(@PathVariable Long id) {
         return adminService.deleteUserById(id);
     }
 

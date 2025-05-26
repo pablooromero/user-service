@@ -2,7 +2,7 @@ package com.user_service.user_service.exceptions;
 
 import org.springframework.http.HttpStatus;
 
-public class UserException extends Exception {
+public class UserException extends RuntimeException {
     private HttpStatus httpStatus;
 
     public UserException(String message) {

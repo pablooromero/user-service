@@ -9,9 +9,9 @@ import com.user_service.user_service.services.AdminService;
 import com.user_service.user_service.services.UserService;
 import com.user_service.user_service.utils.Constants;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -19,10 +19,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserServiceImplementation implements UserService {
-
-    private static final Logger logger = LoggerFactory.getLogger(UserServiceImplementation.class);
 
     private final UserRepository userRepository;
 
@@ -34,49 +33,49 @@ public class UserServiceImplementation implements UserService {
 
     @Override
     public UserEntity saveUser(UserEntity user) {
-        logger.info(Constants.SAVING_USER, user.getEmail());
+        log.info(Constants.SAVING_USER, user.getEmail());
         UserEntity savedUser = userRepository.save(user);
-        logger.info(Constants.USER_SAVED_SUCCESSFULLY, user.getEmail());
+        log.info(Constants.USER_SAVED_SUCCESSFULLY, user.getEmail());
         return savedUser;
     }
 
     @Override
-    public ResponseEntity<Long> getUserIdByEmail(String email) throws UserException {
-        logger.info(Constants.GET_USER_BY_EMAIL, email);
+    public ResponseEntity<Long> getUserIdByEmail(String email) {
+        log.info(Constants.GET_USER_BY_EMAIL, email);
 
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    logger.warn(Constants.GET_USER_BY_EMAIL, email);
+                    log.warn(Constants.GET_USER_BY_EMAIL, email);
                     return new UserException(Constants.USER_NOT_FOUND_WITH_EMAIL + email, HttpStatus.NOT_FOUND);
                 });
 
-        logger.info(Constants.GET_USER_BY_EMAIL_SUCCESSFULLY, user.getEmail());
+        log.info(Constants.GET_USER_BY_EMAIL_SUCCESSFULLY, user.getEmail());
 
         return new ResponseEntity<>(user.getId(), HttpStatus.OK);
     }
 
     @Override
-    public RegisterUserRequest getUserByEmail(String email) throws UserException {
-        logger.info(Constants.GET_USER_BY_EMAIL, email);
+    public RegisterUserRequest getUserByEmail(String email) {
+        log.info(Constants.GET_USER_BY_EMAIL, email);
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> {
-                    logger.warn(Constants.USER_NOT_FOUND_WITH_EMAIL, email);
+                    log.warn(Constants.USER_NOT_FOUND_WITH_EMAIL, email);
                     return new UserException(Constants.USR_NOT_EXIST + email, HttpStatus.NOT_FOUND);
                 });
 
-        logger.info(Constants.USER_NOT_FOUND_WITH_EMAIL, email);
+        log.info(Constants.USER_NOT_FOUND_WITH_EMAIL, email);
         return new RegisterUserRequest(user.getId(), user.getName(), user.getLastName(), user.getEmail(), user.getStatus(), user.getRole());
     }
 
     @Override
-    public ResponseEntity<UserDTO> updateUser(Long id, UpdateUserRequest updateUser) throws UserException {
-        logger.info(Constants.UPDATING_USER, id);
+    public ResponseEntity<UserDTO> updateUser(Long id, UpdateUserRequest updateUser) {
+        log.info(Constants.UPDATING_USER, id);
 
         adminService.validatePassword(updateUser.password());
 
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> {
-                    logger.warn(Constants.USER_NOT_FOUND, id);
+                    log.warn(Constants.USER_NOT_FOUND, id);
                     return new UserException(Constants.USR_NOT_EXIST, HttpStatus.NOT_FOUND);
                 });
 
@@ -85,7 +84,7 @@ public class UserServiceImplementation implements UserService {
 
         saveUser(user);
 
-        logger.info(Constants.UPDATE_USER_SUCCESSFULLY, user.getEmail());
+        log.info(Constants.UPDATE_USER_SUCCESSFULLY, user.getEmail());
 
         UserDTO userDTO = new UserDTO(user.getId(), user.getName(), user.getLastName(), user.getEmail(), user.getRole(), user.getStatus());
 
@@ -93,41 +92,49 @@ public class UserServiceImplementation implements UserService {
     }
 
     @Override
-    public void deleteUserById(Long id) throws UserException {
-        logger.info(Constants.DELETING_USER, id);
+    public void deleteUserById(Long id) {
+        log.info(Constants.DELETING_USER, id);
         if (!adminService.existUserById(id)) {
-            logger.warn(Constants.USER_NOT_FOUND, id);
+            log.warn(Constants.USER_NOT_FOUND, id);
             throw new UserException(Constants.USR_NOT_EXIST, HttpStatus.NOT_FOUND);
         } else {
             userRepository.deleteById(id);
-            logger.info(Constants.USER_DELETED_SUCCESSFULLY, id);
+            log.info(Constants.USER_DELETED_SUCCESSFULLY, id);
         }
     }
 
     @Override
-    public AuthDTO changePassword(ChangePasswordRequest changePasswordRequest, Authentication authentication) throws UserException {
-        logger.info(Constants.CHANGING_PASSWORD);
+    public UserEntity findByEmail(String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserException(Constants.USER_NOT_FOUND_WITH_EMAIL + email, HttpStatus.NOT_FOUND));
+
+        return user;
+    }
+
+    @Override
+    public AuthDTO changePassword(ChangePasswordRequest changePasswordRequest, Authentication authentication) {
+        log.info(Constants.CHANGING_PASSWORD);
         UserEntity user = securityUtils.getAuthenticatedUser(authentication);
 
         if (!passwordEncoder.matches(changePasswordRequest.currentPassword(), user.getPassword())) {
-            logger.warn(Constants.CURRENT_PASSWORD_INCORRECT, user.getEmail());
+            log.warn(Constants.CURRENT_PASSWORD_INCORRECT, user.getEmail());
             return new AuthDTO("-", "Current password is incorrect");
         }
 
         if (changePasswordRequest.newPassword().length() < 8) {
-            logger.warn(Constants.NEW_PASSWORD_TOO_SHORT, user.getEmail());
+            log.warn(Constants.NEW_PASSWORD_TOO_SHORT, user.getEmail());
             return new AuthDTO("-", "New password must be at least 8 characters long");
         }
 
         if (passwordEncoder.matches(changePasswordRequest.newPassword(), user.getPassword())) {
-            logger.warn(Constants.NEW_PASSWORD_SAME, user.getEmail());
+            log.warn(Constants.NEW_PASSWORD_SAME, user.getEmail());
             return new AuthDTO("-", "New password cannot be the same as the current password");
         }
 
         user.setPassword(passwordEncoder.encode(changePasswordRequest.newPassword()));
         saveUser(user);
 
-        logger.info(Constants.PASSWORD_UPDATED_SUCCESSFULLY, user.getEmail());
+        log.info(Constants.PASSWORD_UPDATED_SUCCESSFULLY, user.getEmail());
         return new AuthDTO("-", "Password updated successfully");
     }
 }

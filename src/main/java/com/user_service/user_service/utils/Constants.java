@@ -6,7 +6,7 @@ public class Constants {
     public static final String EXIST_EMAIL="The email already exists";
     public static final String INV_EMAIL="The email its invalid";
     public static final String SUC_DEL_USER = "Successful deleted user";
-    public static final String[] URL_MAILS = {"@hotmail.com","outlook.com","gmail.com"};
+    public static final String[] URL_MAILS = {"@hotmail.com","outlook.com","gmail.com", "@example.com"};
     public static final String SUC_REG = "Successful register";
     public static final String BODY_MAIL = "Thanks for using our application!. \nHave a nice day ;)\n";
     public static final String INV_CRED = "Invalid credentials";
@@ -46,5 +46,8 @@ public class Constants {
     public static final String NEW_PASSWORD_TOO_SHORT = "New password is too short for user: ";
     public static final String NEW_PASSWORD_SAME = "New password is the same as the current password for user: ";
     public static final String PASSWORD_UPDATED_SUCCESSFULLY = "Password updated successfully for user: ";
+    public static final String USER_ID_NULL = "Critical error: User ID is null before generating registration token for email: ";
+    public static final String ERROR_SEND_REGISTRATION_EMAIL = "Error sending log event to RabbitMQ for user ID: ";
+
 }
 
